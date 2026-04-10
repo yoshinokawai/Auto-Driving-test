@@ -1,0 +1,202 @@
+{
+  "trips": [
+    {
+      "id": 1775800056984,
+      "startTime": "2026-04-10T05:47:36.984Z",
+      "endTime": "2026-04-10T05:48:28.394Z",
+      "missionInfo": "2 điểm dừng",
+      "scenarioName": "test",
+      "distance": 66,
+      "status": "SUCCESS"
+    }
+  ],
+  "logs": [
+    {
+      "id": 1775800549455,
+      "msg": "Báo cáo đã lưu vào máy tính: BAO_CAO_NHIEM_VU_1775800549440.md",
+      "type": "SUCCESS",
+      "time": "2026-04-10T05:55:49.455Z"
+    },
+    {
+      "id": 1775800438641,
+      "msg": "Đã xuất báo cáo nhiệm vụ ra file Markdown.",
+      "type": "INFO",
+      "time": "2026-04-10T05:53:58.641Z"
+    },
+    {
+      "id": 1775800365300,
+      "msg": "Đã xuất báo cáo nhiệm vụ ra file Markdown.",
+      "type": "INFO",
+      "time": "2026-04-10T05:52:45.300Z"
+    },
+    {
+      "id": 1775800314306,
+      "msg": "Đã xuất báo cáo nhiệm vụ ra file Markdown.",
+      "type": "INFO",
+      "time": "2026-04-10T05:51:54.306Z"
+    },
+    {
+      "id": 1775800253481,
+      "msg": "Đã tải cấu hình: test",
+      "type": "INFO",
+      "time": "2026-04-10T05:50:53.481Z"
+    },
+    {
+      "id": 1775800251489,
+      "msg": "Đã xoá kịch bản 'backend_is_live' khỏi bộ nhớ.",
+      "type": "WARNING",
+      "time": "2026-04-10T05:50:51.489Z"
+    },
+    {
+      "id": 1775800247095,
+      "msg": "Đã tải cấu hình: backend_is_live",
+      "type": "INFO",
+      "time": "2026-04-10T05:50:47.095Z"
+    },
+    {
+      "id": 1775800108395,
+      "msg": "Nhiệm vụ hoàn tất. Đang phân tích dữ liệu.",
+      "type": "SUCCESS",
+      "time": "2026-04-10T05:48:28.395Z"
+    },
+    {
+      "id": 1775800102820,
+      "msg": "Đã đến điểm trung chuyển. Đang chuyển hướng...",
+      "type": "SUCCESS",
+      "time": "2026-04-10T05:48:22.820Z"
+    },
+    {
+      "id": 1775800101585,
+      "msg": "Tiếp tục lộ trình.",
+      "type": "INFO",
+      "time": "2026-04-10T05:48:21.585Z"
+    },
+    {
+      "id": 1775800099061,
+      "msg": "Đã tạm dừng nhiệm vụ.",
+      "type": "INFO",
+      "time": "2026-04-10T05:48:19.061Z"
+    },
+    {
+      "id": 1775800086789,
+      "msg": "Đã đến điểm trung chuyển. Đang chuyển hướng...",
+      "type": "SUCCESS",
+      "time": "2026-04-10T05:48:06.789Z"
+    },
+    {
+      "id": 1775800070073,
+      "msg": "SỰ CỐ [OBSTACLE]: Phát hiện vật cản. Đang tìm đường vòng...",
+      "type": "DANGER",
+      "time": "2026-04-10T05:47:50.073Z"
+    },
+    {
+      "id": 1775800067114,
+      "msg": "SỰ CỐ [OBSTACLE]: Phát hiện vật cản. Đang tìm đường vòng...",
+      "type": "DANGER",
+      "time": "2026-04-10T05:47:47.114Z"
+    },
+    {
+      "id": 1775800056987,
+      "msg": "Khởi động hành trình #6984",
+      "type": "INFO",
+      "time": "2026-04-10T05:47:36.987Z"
+    },
+    {
+      "id": 1775800017917,
+      "msg": "Đã xuất báo cáo nhiệm vụ ra file Markdown.",
+      "type": "INFO",
+      "time": "2026-04-10T05:46:57.917Z"
+    },
+    {
+      "id": 1775800014849,
+      "msg": "Đã lưu cấu hình bản đồ: 'test'",
+      "type": "INFO",
+      "time": "2026-04-10T05:46:54.849Z"
+    },
+    {
+      "id": 1775799897861,
+      "msg": "Đã lưu cấu hình bản đồ: 'backend_is_live_2'",
+      "type": "INFO",
+      "time": "2026-04-10T05:44:57.861Z"
+    },
+    {
+      "id": 1775799836995,
+      "msg": "Đã lưu cấu hình bản đồ: 'backend_is_live'",
+      "type": "INFO",
+      "time": "2026-04-10T05:43:56.995Z"
+    }
+  ],
+  "incidents": [
+    {
+      "id": 1775800070073,
+      "tripId": 1775800056984,
+      "type": "OBSTACLE",
+      "msg": "Phát hiện vật cản. Đang tìm đường vòng...",
+      "time": "2026-04-10T05:47:50.073Z"
+    },
+    {
+      "id": 1775800067113,
+      "tripId": 1775800056984,
+      "type": "OBSTACLE",
+      "msg": "Phát hiện vật cản. Đang tìm đường vòng...",
+      "time": "2026-04-10T05:47:47.113Z"
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "Thành phố Mặc định",
+      "obstacles": [
+        "5,5",
+        "5,6",
+        "6,5",
+        "10,12",
+        "11,12",
+        "12,12"
+      ],
+      "waypoints": [
+        {
+          "x": 14,
+          "y": 14
+        }
+      ]
+    },
+    {
+      "name": "backend_is_live_2",
+      "obstacles": [
+        "5,5",
+        "5,6",
+        "6,5",
+        "10,12",
+        "11,12",
+        "12,12"
+      ],
+      "waypoints": [
+        {
+          "x": 14,
+          "y": 14
+        }
+      ]
+    },
+    {
+      "name": "test",
+      "obstacles": [
+        "5,5",
+        "5,6",
+        "6,5",
+        "10,12",
+        "11,12",
+        "12,12"
+      ],
+      "waypoints": [
+        {
+          "x": 14,
+          "y": 14
+        },
+        {
+          "x": 3,
+          "y": 6
+        }
+      ]
+    }
+  ]
+}

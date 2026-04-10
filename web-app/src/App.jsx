@@ -47,6 +47,16 @@ function App() {
     updateRiskMap(obstacles);
   }, [obstacles]);
 
+  // --- Cập nhật Tự động từ Database ---
+  useEffect(() => {
+    const unsubscribe = db.subscribe((data) => {
+      setScenarios([...data.scenarios]);
+      setLogs([...data.logs.slice(0, 50)]);
+      setHistory({...db.getHistory()});
+    });
+    return () => unsubscribe();
+  }, []);
+
   const updateRiskMap = useCallback((currentObstacles) => {
     const newMap = {};
     for (let x = 0; x < GRID_SIZE; x++) {
@@ -255,29 +265,38 @@ function App() {
     addLog(`Đã tải cấu hình: ${s.name}`);
   };
 
-  const exportToMarkdown = () => {
+  const exportToMarkdown = async () => {
     const data = db.getHistory();
     let md = `# BÁO CÁO NHIỆM VỤ AEGIS-CORE\n\n`;
     md += `Thời gian tạo: ${new Date().toLocaleString()}\n\n`;
     
     md += `## LỊCH SỬ HÀNH TRÌNH\n\n| ID | KỊCH BẢN | THỜI GIAN | QUÃNG ĐƯỜNG | TRẠNG THÁI |\n|---|---|---|---|---|\n`;
-    data.trips.forEach(t => {
-      md += `| #${t.id.toString().slice(-4)} | ${t.scenarioName} | ${new Date(t.startTime).toLocaleTimeString()} | ${t.distance}U | ${t.status} |\n`;
+    (data.trips || []).forEach(t => {
+      const idStr = t.id ? t.id.toString().slice(-4) : "N/A";
+      md += `| #${idStr} | ${t.scenarioName || '---'} | ${new Date(t.startTime).toLocaleTimeString()} | ${t.distance || 0}U | ${t.status} |\n`;
     });
 
     md += `\n## NHẬT KÝ SỰ CỐ\n\n`;
-    if (data.incidents.length === 0) md += `*Không có sự cố nào được ghi nhận.*\n`;
+    if (!data.incidents || data.incidents.length === 0) md += `*Không có sự cố nào được ghi nhận.*\n`;
     else data.incidents.forEach(inc => {
-      md += `- **${inc.type}**: ${inc.msg} (Mã hành trình: ${inc.tripId.toString().slice(-4)})\n`;
+      const tripIdStr = inc.tripId ? inc.tripId.toString().slice(-4) : "N/A";
+      md += `- **${inc.type}**: ${inc.msg} (Mã hành trình: ${tripIdStr})\n`;
     });
 
-    const blob = new Blob([md], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `BAO_CAO_NHIEM_VU_${Date.now()}.md`;
-    link.click();
-    addLog("Đã xuất báo cáo nhiệm vụ ra file Markdown.");
+    try {
+      const fileName = `BAO_CAO_NHIEM_VU_${Date.now()}.md`;
+      const response = await fetch('http://localhost:5000/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: fileName, content: md })
+      });
+      if (response.ok) {
+        addLog(`Báo cáo đã lưu vào máy tính: ${fileName}`, "SUCCESS");
+        alert(`BÁO CÁO ĐÃ ĐƯỢC LƯU TRỰC TIẾP!\nHãy vào thư mục 'web-app' để thấy file: ${fileName}`);
+      }
+    } catch (err) {
+      addLog("Lỗi server khi lưu báo cáo.", "DANGER");
+    }
   };
 
   return (
