@@ -1,5 +1,5 @@
 /**
- * A* Pathfinding implementation for the autonomous vehicle.
+ * Thuật toán tìm đường A* cho xe tự hành.
  */
 export class PathFinder {
   constructor(width, height) {
@@ -20,7 +20,7 @@ export class PathFinder {
     fScore.set(startKey, this.heuristic(start, target));
 
     while (openSet.length > 0) {
-      // Get node with lowest fScore
+      // Lấy nút có fScore thấp nhất
       let current = openSet[0];
       let currentIndex = 0;
       for (let i = 1; i < openSet.length; i++) {
@@ -53,16 +53,18 @@ export class PathFinder {
       }
     }
 
-    return []; // No path found
+    return []; // Không tìm thấy đường đi
   }
 
+  // Hàm tính toán khoảng cách Manhattan
   heuristic(a, b) {
     return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
   }
 
+  // Lấy các ô lân cận không có vật cản
   getNeighbors(node, obstacles) {
     const neighbors = [];
-    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+    const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0]]; // Lên, Xuống, Phải, Trái
 
     for (const [dx, dy] of dirs) {
       const nx = node.x + dx;
@@ -77,10 +79,12 @@ export class PathFinder {
     return neighbors;
   }
 
+  // Chuyển đối tượng tọa độ thành chuỗi khóa cho Map/Set
   posToKey(pos) {
     return `${pos.x},${pos.y}`;
   }
 
+  // Tái thiết lập đường đi từ điểm đích về điểm bắt đầu
   reconstructPath(cameFrom, current) {
     const path = [current];
     let currentKey = this.posToKey(current);

@@ -8,27 +8,27 @@ import './App.css';
 const GRID_SIZE = 15;
 
 function App() {
-  // --- Core Engines ---
+  // --- Công cụ tính toán cốt lõi ---
   const pathFinder = useMemo(() => new PathFinder(GRID_SIZE, GRID_SIZE), []);
   const riskModel = useMemo(() => new ProbabilityModel(GRID_SIZE), []);
 
-  // --- Grid & Mission States ---
+  // --- Trạng thái Bản đồ & Nhiệm vụ ---
   const [vehiclePos, setVehiclePos] = useState({ x: 0, y: 0 });
   const [missionPlan, setMissionPlan] = useState([{ x: 14, y: 14 }]);
   const [obstacles, setObstacles] = useState(new Set(db.getScenarios()[0]?.obstacles || []));
   const [riskMap, setRiskMap] = useState({});
   const [showRiskMap, setShowRiskMap] = useState(false);
-  const [selectionMode, setSelectionMode] = useState('WAYPOINT'); // 'WAYPOINT', 'OBSTACLE'
+  const [selectionMode, setSelectionMode] = useState('WAYPOINT'); // 'WAYPOINT': Điểm đích, 'OBSTACLE': Vật cản
 
-  // --- Simulation States ---
+  // --- Trạng thái Mô phỏng ---
   const [isSimulating, setIsSimulating] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [autoIncident, setAutoIncident] = useState(false);
   const [vehicleState, setVehicleState] = useState('IDLE');
-  const [lastDecision, setLastDecision] = useState('System ready for deployment');
+  const [lastDecision, setLastDecision] = useState('Hệ thống sẵn sàng triển khai');
   const [currentTripId, setCurrentTripId] = useState(null);
 
-  // --- Persistence & UI ---
+  // --- Trạng thái Dữ liệu & UI ---
   const [logs, setLogs] = useState(db.getHistory().logs);
   const [history, setHistory] = useState(db.getHistory());
   const [showAnalytics, setShowAnalytics] = useState(false);
@@ -38,11 +38,11 @@ function App() {
   const [selectedScenarioIdx, setSelectedScenarioIdx] = useState(0);
   const [telemetry, setTelemetry] = useState({ speed: 0, distance: 0, confidence: 100 });
 
-  // --- Refs ---
+  // --- Tham chiếu (Refs) ---
   const activePathRef = useRef([]);
   const pathIndexRef = useRef(0);
 
-  // --- Initialization ---
+  // --- Khởi tạo ---
   useEffect(() => {
     updateRiskMap(obstacles);
   }, [obstacles]);
@@ -57,7 +57,7 @@ function App() {
     setRiskMap(newMap);
   }, [riskModel]);
 
-  // --- Database Sync ---
+  // --- Đồng bộ Cơ sở dữ liệu ---
   const addLog = (msg, type = 'INFO') => {
     const entry = db.logEvent(msg, type);
     setLogs(prev => [entry, ...prev.slice(0, 49)]);
@@ -65,7 +65,7 @@ function App() {
 
   const addIncident = (type, msg) => {
     db.logIncident(currentTripId, type, msg);
-    addLog(`INCIDENT [${type}]: ${msg}`, 'DANGER');
+    addLog(`SỰ CỐ [${type}]: ${msg}`, 'DANGER');
     setHistory(db.getHistory());
   };
 
@@ -74,7 +74,7 @@ function App() {
     return newPath;
   }, [pathFinder]);
 
-  // --- Auto-Incident Engine ---
+  // --- Bộ máy tạo Sự cố Tự động ---
   useEffect(() => {
     if (!autoIncident || !isSimulating || isPaused) return;
     const chaosInterval = setInterval(() => {
@@ -95,22 +95,22 @@ function App() {
         next.add(`${x},${y}`);
         return next;
       });
-      addLog(`RADAR: Unexpected hazard at [${x},${y}]`, 'WARNING');
+      addLog(`RADAR: Phát hiện vật cản bất ngờ tại [${x},${y}]`, 'WARNING');
     }
   };
 
-  // --- Simulation Cycle ---
+  // --- Vòng lặp Mô phỏng ---
   useEffect(() => {
     if (!isSimulating || isPaused) return;
 
     const tick = setInterval(() => {
       if (pathIndexRef.current >= activePathRef.current.length) {
-        // Waypoint Logic
+        // Logic xử lý Điểm đích (Waypoint)
         if (missionPlan.length > 1) {
           const nextPlan = [...missionPlan];
           nextPlan.shift();
           setMissionPlan(nextPlan);
-          addLog(`Waypoint reached. Engaging next vector...`, 'SUCCESS');
+          addLog(`Đã đến điểm trung chuyển. Đang chuyển hướng...`, 'SUCCESS');
           const nextPath = calculatePath(vehiclePos, nextPlan[0], obstacles);
           activePathRef.current = nextPath;
           pathIndexRef.current = 0;
@@ -119,14 +119,14 @@ function App() {
           setVehicleState('STOPPED');
           db.endTrip(currentTripId, telemetry.distance, 'SUCCESS');
           setHistory(db.getHistory());
-          addLog("Mission Analysis Complete.", "SUCCESS");
+          addLog("Nhiệm vụ hoàn tất. Đang phân tích dữ liệu.", "SUCCESS");
         }
         return;
       }
 
       const nextNode = activePathRef.current[pathIndexRef.current];
       
-      // Safety Assessment
+      // Đánh giá An toàn
       const sensorDist = obstacles.has(`${nextNode.x},${nextNode.y}`) ? 0.5 : 1.5;
       const action = SafetyLogic.evaluate(sensorDist, telemetry.speed);
       setLastDecision(SafetyLogic.getXAIExplanation(action));
@@ -137,11 +137,11 @@ function App() {
         if (rPath.length > 0) {
           activePathRef.current = rPath;
           pathIndexRef.current = 0;
-          addIncident('OBSTACLE', 'Obstacle detected. Rerouting...');
+          addIncident('OBSTACLE', 'Phát hiện vật cản. Đang tìm đường vòng...');
         } else {
           setIsSimulating(false);
           setVehicleState('STOPPED');
-          addIncident('TRAPPED', 'All paths blocked. Shutdown.');
+          addIncident('TRAPPED', 'Mọi lối đi đã bị chặn. Dừng hệ thống.');
           db.endTrip(currentTripId, telemetry.distance, 'FAILED');
           setHistory(db.getHistory());
         }
@@ -163,18 +163,18 @@ function App() {
     return () => clearInterval(tick);
   }, [isSimulating, isPaused, missionPlan, obstacles, vehiclePos, telemetry.speed, currentTripId, calculatePath]);
 
-  // --- Controllers ---
+  // --- Bộ điều khiển ---
   const handleStartContinue = () => {
     if (isPaused) {
       setIsPaused(false);
       setVehicleState('MOVING');
-      addLog("Mission sequence resumed.");
+      addLog("Tiếp tục lộ trình.");
       return;
     }
 
-    // Always start a trip record to ensure persistence of every attempt
-    const missionName = scenarioNameInput || scenarios[selectedScenarioIdx]?.name || "Custom Grid";
-    const trip = db.startTrip(`${missionPlan.length} stops`, missionName);
+    // Luôn ghi lại bản ghi hành trình để đảm bảo lưu trữ
+    const missionName = scenarioNameInput || scenarios[selectedScenarioIdx]?.name || "Bản đồ tùy chỉnh";
+    const trip = db.startTrip(`${missionPlan.length} điểm dừng`, missionName);
     setCurrentTripId(trip.id);
 
     const launchPath = calculatePath(vehiclePos, missionPlan[0], obstacles);
@@ -184,12 +184,12 @@ function App() {
       setIsSimulating(true);
       setIsPaused(false);
       setVehicleState('MOVING');
-      addLog(`Initiating trip #${trip.id.toString().slice(-4)}`);
+      addLog(`Khởi động hành trình #${trip.id.toString().slice(-4)}`);
     } else {
-      setLastDecision("Target unreachable!");
+      setLastDecision("Mục tiêu không thể tiếp cận!");
       db.endTrip(trip.id, 0, 'FAILED_PATH');
       setHistory(db.getHistory());
-      addLog("Mission sequence failed: No path found.", "DANGER");
+      addLog("Khởi động thất bại: Không tìm thấy đường đi.", "DANGER");
     }
   };
 
@@ -197,7 +197,7 @@ function App() {
     if (!isSimulating) return;
     setIsPaused(true);
     setVehicleState('PAUSED');
-    addLog("Mission sequence suspended.");
+    addLog("Đã tạm dừng nhiệm vụ.");
   };
 
   const handleAbort = () => {
@@ -207,25 +207,27 @@ function App() {
     if (currentTripId) {
       db.endTrip(currentTripId, telemetry.distance, 'ABORTED');
       setHistory(db.getHistory());
-      addLog("Mission sequence aborted.", "WARNING");
+      addLog("Đã hủy bỏ hành trình.", "WARNING");
     }
   };
 
   const saveScenario = () => {
     const name = scenarioNameInput.trim();
-    if (!name) { alert("Please enter a scenario name."); return; }
+    if (!name) { alert("Vui lòng nhập tên kịch bản."); return; }
     db.saveScenario(name, obstacles, missionPlan);
     setScenarios([...db.getScenarios()]);
-    addLog(`Map configuration saved as '${name}'`);
+    addLog(`Đã lưu cấu hình bản đồ: '${name}'`);
   };
 
   const deleteScenario = () => {
+    // Ưu tiên: Tên từ ô nhập liệu, nếu không dùng mục đang chọn từ danh sách
     const nameToDelete = scenarioNameInput.trim() || scenarios[selectedScenarioIdx]?.name;
+    
     if (!nameToDelete) {
-      alert("No scenario selected to delete.");
+      alert("Chưa chọn kịch bản để xoá.");
       return;
     }
-    // Show custom tactical confirmation instead of native window.confirm
+
     setShowConfirmDelete(true);
   };
 
@@ -237,7 +239,7 @@ function App() {
     setScenarioNameInput("");
     setSelectedScenarioIdx(0);
     setShowConfirmDelete(false);
-    addLog(`Scenario '${nameToDelete}' purged from memory.`, "WARNING");
+    addLog(`Đã xoá kịch bản '${nameToDelete}' khỏi bộ nhớ.`, "WARNING");
   };
 
   const loadScenario = (index) => {
@@ -250,80 +252,87 @@ function App() {
     setVehiclePos({ x: 0, y: 0 });
     setIsSimulating(false);
     setIsPaused(false);
-    addLog(`Config loaded: ${s.name}`);
+    addLog(`Đã tải cấu hình: ${s.name}`);
   };
 
   const exportToMarkdown = () => {
     const data = db.getHistory();
-    let md = `# AEGIS-CORE MISSION REPORT\n\n`;
-    md += `Generated: ${new Date().toLocaleString()}\n\n`;
+    let md = `# BÁO CÁO NHIỆM VỤ AEGIS-CORE\n\n`;
+    md += `Thời gian tạo: ${new Date().toLocaleString()}\n\n`;
     
-    md += `## TRIP ARCHIVE\n\n| ID | SCENARIO | TIME | DISTANCE | STATUS |\n|---|---|---|---|---|\n`;
+    md += `## LỊCH SỬ HÀNH TRÌNH\n\n| ID | KỊCH BẢN | THỜI GIAN | QUÃNG ĐƯỜNG | TRẠNG THÁI |\n|---|---|---|---|---|\n`;
     data.trips.forEach(t => {
       md += `| #${t.id.toString().slice(-4)} | ${t.scenarioName} | ${new Date(t.startTime).toLocaleTimeString()} | ${t.distance}U | ${t.status} |\n`;
     });
 
-    md += `\n## INCIDENT LOGS\n\n`;
-    if (data.incidents.length === 0) md += `*No incidents recorded.*\n`;
+    md += `\n## NHẬT KÝ SỰ CỐ\n\n`;
+    if (data.incidents.length === 0) md += `*Không có sự cố nào được ghi nhận.*\n`;
     else data.incidents.forEach(inc => {
-      md += `- **${inc.type}**: ${inc.msg} (Trip ID: ${inc.tripId.toString().slice(-4)})\n`;
+      md += `- **${inc.type}**: ${inc.msg} (Mã hành trình: ${inc.tripId.toString().slice(-4)})\n`;
     });
 
     const blob = new Blob([md], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `AEGIS_MISSION_REPORT_${Date.now()}.md`;
+    link.download = `BAO_CAO_NHIEM_VU_${Date.now()}.md`;
     link.click();
-    addLog("Mission report exported to Markdown.");
+    addLog("Đã xuất báo cáo nhiệm vụ ra file Markdown.");
   };
 
   return (
     <div className="app-container tactical-bg">
       <header className="main-header glass-panel">
         <div className="title-group">
-          <h1 className="neon">AEGIS-CORE <span className="term-text">COMMAND SYSTEM</span></h1>
-          <p className="term-text" style={{letterSpacing: '5px'}}>LOGISTICS & AUTONOMY v4.6</p>
+          <h1 className="neon">AEGIS-CORE <span className="term-text">HỆ THỐNG ĐIỀU PHỐI</span></h1>
+          <p className="term-text" style={{letterSpacing: '5px'}}>LOGISTICS & TỰ HÀNH v4.6</p>
         </div>
         <div className="state-monitor">
-          <div className="monitor-value" data-state={vehicleState}>{vehicleState}</div>
-          <div className="term-text">SYSTEM STATUS</div>
+          <div className="monitor-value" data-state={vehicleState}>
+             {vehicleState === 'IDLE' ? 'SẴN SÀNG' : 
+              vehicleState === 'MOVING' ? 'ĐANG CHẠY' : 
+              vehicleState === 'PAUSED' ? 'TẠM DỪNG' : 
+              vehicleState === 'STOPPED' ? 'ĐÃ DỪNG' : 
+              vehicleState === 'BRAKING' ? 'ĐANG PHANH' : 
+              vehicleState === 'REROUTING' ? 'CHUYỂN HƯỚNG' : vehicleState}
+          </div>
+          <div className="term-text">TRẠNG THÁI HỆ THỐNG</div>
         </div>
       </header>
 
       <div className="main-content">
         <aside className="side-panel left glass-panel">
           <div className="telemetry-block">
-            <h3>QUANTUM STATUS</h3>
+            <h3>THÔNG SỐ VẬN HÀNH</h3>
             <div className="tactical-gauge">
-              <div className="gauge-label">VELOCITY (KM/H)</div>
+              <div className="gauge-label">VẬN TỐC (KM/H)</div>
               <div className="gauge-value cyan">{telemetry.speed}</div>
             </div>
             <div className="tactical-gauge">
-              <div className="gauge-label">TOTAL DISTANCE</div>
+              <div className="gauge-label">QUÃNG ĐƯỜNG</div>
               <div className="gauge-value">{telemetry.distance.toFixed(1)}U</div>
             </div>
           </div>
 
           <div className="xai-block">
-            <h3>AI LOGIC FEED (XAI)</h3>
+            <h3>LOGIC TRÍ TUỆ NHÂN TẠO (XAI)</h3>
             <div className="logic-output">
                <span className="cursor">{">"}</span> {lastDecision}
             </div>
           </div>
 
           <div className="scenarios-block">
-             <h3>SCENARIO MANAGER</h3>
+             <h3>QUẢN LÝ KỊCH BẢN</h3>
              <div className="scenario-controls">
                 <input 
                   className="tactical-input" 
-                  placeholder="SCENARIO NAME..." 
+                  placeholder="TÊN KỊCH BẢN..." 
                   value={scenarioNameInput} 
                   onChange={e => setScenarioNameInput(e.target.value)} 
                 />
                 <div className="save-row">
-                  <button onClick={saveScenario} className="mini-btn" style={{flex: 1}}>SAVE MAP</button>
-                  <button onClick={deleteScenario} className="mini-btn danger" style={{flex: 1}}>DELETE MAP</button>
+                  <button onClick={saveScenario} className="mini-btn" style={{flex: 1}}>LƯU BẢN ĐỒ</button>
+                  <button onClick={deleteScenario} className="mini-btn danger" style={{flex: 1}}>XOÁ BẢN ĐỒ</button>
                 </div>
                 <select className="tactical-select" value={selectedScenarioIdx} onChange={(e) => loadScenario(parseInt(e.target.value))}>
                   {scenarios.map((s, i) => <option key={i} value={i}>{s.name}</option>)}
@@ -336,14 +345,14 @@ function App() {
           <div className="grid-controls">
             <div className="interaction-modes">
               <button className={`mode-toggle ${selectionMode === 'WAYPOINT' ? 'active' : ''}`} data-mode="WAYPOINT" onClick={() => setSelectionMode('WAYPOINT')}>
-                ADD TARGET
+                THÊM ĐÍCH ĐẾN
               </button>
               <button className={`mode-toggle ${selectionMode === 'OBSTACLE' ? 'active' : ''}`} data-mode="OBSTACLE" onClick={() => setSelectionMode('OBSTACLE')}>
-                ADD HAZARD
+                THÊM VẬT CẢN
               </button>
             </div>
             <button className={`mode-btn ${showRiskMap ? 'active' : ''}`} onClick={() => setShowRiskMap(!showRiskMap)}>
-               RADAR SCAN {showRiskMap ? 'ACTIVE' : 'OFF'}
+               QUÉT RADAR {showRiskMap ? 'ĐANG BẬT' : 'ĐANG TẮT'}
             </button>
           </div>
           <div className="simulation-grid">
@@ -371,7 +380,7 @@ function App() {
 
         <aside className="side-panel right glass-panel">
           <div className="event-log">
-             <h3>SYSTEM LOGS</h3>
+             <h3>NHẬT KÝ HỆ THỐNG</h3>
              <div className="log-scroll">
                 {logs.map((l, i) => (
                   <div key={i} className="log-row">
@@ -380,29 +389,29 @@ function App() {
                 ))}
              </div>
           </div>
-          <button className="tact-btn action" onClick={() => {setHistory(db.getHistory()); setShowAnalytics(true)}}>VIEW ANALYTICS</button>
+          <button className="tact-btn action" onClick={() => {setHistory(db.getHistory()); setShowAnalytics(true)}}>XEM PHÂN TÍCH</button>
         </aside>
       </div>
 
       <footer className="tactical-footer glass-panel">
-        <button className="tact-btn action" onClick={handleStartContinue} disabled={isSimulating && !isPaused}>START/RESUME</button>
-        <button className="tact-btn warning" onClick={handlePause} disabled={!isSimulating || isPaused}>PAUSE</button>
-        <button className="tact-btn danger" onClick={handleAbort} disabled={!isSimulating && !isPaused}>STOP/ABORT</button>
-        <button className="tact-btn neutral" onClick={() => { setVehiclePos({x:0,y:0}); setMissionPlan([{x:14,y:14}]); setTelemetry({speed:0,distance:0,confidence:100}); setObstacles(new Set()); addLog("System Reset."); }}>RESET</button>
-        <button className="tact-btn" onClick={handleRandomIncident}>CHAOS INJECT</button>
+        <button className="tact-btn action" onClick={handleStartContinue} disabled={isSimulating && !isPaused}>BẮT ĐẦU / TIẾP TỤC</button>
+        <button className="tact-btn warning" onClick={handlePause} disabled={!isSimulating || isPaused}>TẠM DỪNG</button>
+        <button className="tact-btn danger" onClick={handleAbort} disabled={!isSimulating && !isPaused}>HUỶ BỎ / DỪNG</button>
+        <button className="tact-btn neutral" onClick={() => { setVehiclePos({x:0,y:0}); setMissionPlan([{x:14,y:14}]); setTelemetry({speed:0,distance:0,confidence:100}); setObstacles(new Set()); addLog("Đã đặt lại hệ thống."); }}>GIAO DIỆN LẠI</button>
+        <button className="tact-btn" onClick={handleRandomIncident}>TẠO VẬT CẢN NGẪU NHIÊN</button>
       </footer>
 
       {showConfirmDelete && (
         <div className="modal-overlay" onClick={() => setShowConfirmDelete(false)}>
           <div className="confirm-modal glass-panel" onClick={e => e.stopPropagation()}>
-            <h2 className="neon" style={{fontSize: '1.2rem', marginBottom: '15px'}}>AUTHENTICATION REQUIRED</h2>
+            <h2 className="neon" style={{fontSize: '1.2rem', marginBottom: '15px'}}>XÁC THỰC QUYỀN TRUY CẬP</h2>
             <p className="term-text" style={{fontSize: '0.8rem', color: '#fff', marginBottom: '20px'}}>
-              PERMANENTLY PURGE DATA: <span style={{color: 'var(--red-critical)'}}>{scenarioNameInput.trim() || scenarios[selectedScenarioIdx]?.name}</span>?
-              THERE IS NO RECOVERING THIS SECTOR ONCE WIPED.
+              XOÁ VĨNH VIỄN DỮ LIỆU: <span style={{color: 'var(--red-critical)'}}>{scenarioNameInput.trim() || scenarios[selectedScenarioIdx]?.name}</span>?
+              HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC.
             </p>
             <div className="save-row" style={{gap: '15px'}}>
-               <button className="tact-btn danger" style={{padding: '10px 20px', flex: 1}} onClick={confirmDeleteScenario}>CONFIRM PURGE</button>
-               <button className="tact-btn" style={{padding: '10px 20px', flex: 1}} onClick={() => setShowConfirmDelete(false)}>CANCEL</button>
+               <button className="tact-btn danger" style={{padding: '10px 20px', flex: 1}} onClick={confirmDeleteScenario}>XÁC NHẬN XOÁ</button>
+               <button className="tact-btn" style={{padding: '10px 20px', flex: 1}} onClick={() => setShowConfirmDelete(false)}>HUỶ BỎ</button>
             </div>
           </div>
         </div>
@@ -412,17 +421,17 @@ function App() {
         <div className="modal-overlay" onClick={() => setShowAnalytics(false)}>
            <div className="analytics-modal glass-panel" onClick={e => e.stopPropagation()}>
               <div className="modal-header">
-                 <h2 className="neon">MISSION HISTORY DATA</h2>
+                 <h2 className="neon">PHÂN TÍCH DỮ LIỆU NHIỆM VỤ</h2>
                  <div style={{display: 'flex', gap: '10px'}}>
-                   <button className="tact-btn action" style={{padding: '5px 15px', fontSize: '0.6rem'}} onClick={exportToMarkdown}>EXPORT .MD</button>
-                   <button className="close-btn" onClick={() => setShowAnalytics(false)}>CLOSE</button>
+                   <button className="tact-btn action" style={{padding: '5px 15px', fontSize: '0.6rem'}} onClick={exportToMarkdown}>XUẤT .MD</button>
+                   <button className="close-btn" onClick={() => setShowAnalytics(false)}>ĐÓNG</button>
                  </div>
               </div>
               <div className="history-grid">
                  <div className="table-container">
                     <table>
                       <thead>
-                        <tr><th>ID</th><th>SCENARIO</th><th>TIME</th><th>DIST</th><th>STATUS</th></tr>
+                        <tr><th>Mã</th><th>Kịch bản</th><th>Thời gian</th><th>Q.Đường</th><th>Trạng thái</th></tr>
                       </thead>
                       <tbody>
                         {history.trips.map(t => (
@@ -431,14 +440,19 @@ function App() {
                             <td>{t.scenarioName}</td>
                             <td>{new Date(t.startTime).toLocaleTimeString()}</td>
                             <td>{t.distance}U</td>
-                            <td className={t.status === 'SUCCESS' ? 'green' : (t.status?.includes('FAILED') ? 'red' : 'cyan')}>{t.status}</td>
+                            <td className={t.status === 'SUCCESS' ? 'green' : (t.status?.includes('FAILED') ? 'red' : 'cyan')}>
+                               {t.status === 'SUCCESS' ? 'THÀNH CÔNG' : 
+                                t.status === 'ABORTED' ? 'ĐÃ HUỶ' : 
+                                t.status === 'FAILED_PATH' ? 'KHÔNG CÓ ĐƯỜNG' :
+                                t.status === 'FAILED' ? 'THẤT BẠI' : t.status}
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                  </div>
                  <div className="incident-box">
-                    <h3>INCIDENT REPORT</h3>
+                    <h3>BÁO CÁO SỰ CỐ</h3>
                     {history.incidents.map((inc, i) => (
                       <div key={i} className="incident-card">
                          <strong>{inc.type}</strong>: {inc.msg}

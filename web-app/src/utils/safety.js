@@ -1,6 +1,6 @@
 /**
- * Safety logic rules for the autonomous vehicle.
- * Ported from SafetyLogic.java and customized for the web app.
+ * Các quy tắc logic an toàn cho xe tự hành.
+ * Được chuyển đổi từ SafetyLogic.java và tùy chỉnh cho ứng dụng web.
  */
 export const SafetyLogic = {
   Action: {
@@ -16,30 +16,30 @@ export const SafetyLogic = {
   },
 
   /**
-   * Evaluates the current situation based on FOL rules.
-   * @param {number} distanceToObstacle - Distance to nearest obstacle.
-   * @param {number} currentSpeed - Current vehicle speed in km/h.
-   * @param {boolean} sensorFailure - Whether sensors are malfunctioning.
-   * @returns {string} One of SafetyLogic.Action constants.
+   * Đánh giá tình huống hiện tại dựa trên các quy tắc logic vị từ (FOL).
+   * @param {number} distanceToObstacle - Khoảng cách đến vật cản gần nhất.
+   * @param {number} currentSpeed - Tốc độ hiện tại của xe (km/h).
+   * @param {boolean} sensorFailure - Trạng thái lỗi cảm biến.
+   * @returns {string} Một trong các hằng số hành động của SafetyLogic.
    */
   evaluate(distanceToObstacle, currentSpeed, sensorFailure = false) {
-    // Rule 1: Emergency Stop Rule
-    // FOL: ∀(o) Obstacle(o) ∧ Distance(v, o) <= 1.0 → Stop(v)
+    // Quy tắc 1: Dừng khẩn cấp
+    // FOL: ∀(o) Vật cản(o) ∧ Khoảng cách(v, o) <= 1.0 → Dừng(v)
     if (distanceToObstacle <= 1.0) {
       return this.Action.EMERGENCY_STOP;
     }
 
-    // Rule 2: Braking Rule
+    // Quy tắc 2: Phanh giảm tốc
     if (distanceToObstacle < this.Config.SAFETY_THRESHOLD) {
       return this.Action.BRAKE;
     }
 
-    // Rule 3: Sensor Failure Rule
+    // Quy tắc 3: Lỗi cảm biến
     if (sensorFailure) {
       return this.Action.CAUTIOUS_DRIVE;
     }
 
-    // Rule 4: High Speed Rule
+    // Quy tắc 4: Tốc độ cao bất thường
     if (currentSpeed > this.Config.MAX_SAFE_SPEED && distanceToObstacle < this.Config.SAFETY_THRESHOLD * 2) {
       return this.Action.BRAKE;
     }
@@ -48,20 +48,20 @@ export const SafetyLogic = {
   },
 
   /**
-   * Returns a human-friendly explanation for the AI's action.
+   * Trả về giải thích dễ hiểu (XAI) cho hành động của AI.
    */
   getXAIExplanation(action) {
     switch (action) {
       case this.Action.EMERGENCY_STOP:
-        return "CRITICAL: Immediate obstacle collision risk! Engaging emergency brakes.";
+        return "NGUY HIỂM: Nguy cơ va chạm trực diện! Đang kích hoạt phanh khẩn cấp.";
       case this.Action.BRAKE:
-        return "ADVISORY: Obstacle within safety envelope. Reducing velocity.";
+        return "CẢNH BÁO: Vật cản nằm trong vùng an toàn. Đang giảm tốc độ.";
       case this.Action.CAUTIOUS_DRIVE:
-        return "NOTICE: Operating in cautious mode due to sensor noise or high-risk zone.";
+        return "THÔNG BÁO: Đang vận hành ở chế độ thận trọng do nhiễu cảm biến hoặc vùng rủi ro cao.";
       case this.Action.CONTINUE:
-        return "OPTIMAL: Environment scanned. Path clear for high-speed transit.";
+        return "TỐI ƯU: Đã quét môi trường. Đường đi thông thoáng, duy trì tốc độ.";
       default:
-        return "SYSTEM OK: Normal operation.";
+        return "HỆ THỐNG OK: Vận hành bình thường.";
     }
   }
 };

@@ -1,9 +1,9 @@
 /**
- * Simulated Database using localStorage.
- * Handles Trips, Logs, Incidents, and Scenarios.
+ * Cơ sở dữ liệu mô phỏng sử dụng localStorage.
+ * Quản lý Hành trình, Nhật ký, Sự cố và Kịch bản bản đồ.
  */
 
-const STORAGE_KEY = 'AEGIS_SYSTEM_DB_V4'; // Bumped version to reset potentially corrupted data
+const STORAGE_KEY = 'AEGIS_SYSTEM_DB_V4'; // Tăng phiên bản để đặt lại dữ liệu nếu cần
 
 const INITIAL_DB = {
   trips: [],
@@ -11,12 +11,12 @@ const INITIAL_DB = {
   incidents: [],
   scenarios: [
     {
-      name: 'Default City',
+      name: 'Thành phố Mặc định',
       obstacles: ['5,5', '5,6', '6,5', '10,12', '11,12', '12,12'],
       waypoints: [{ x: 14, y: 14 }]
     },
     {
-      name: 'Urban Maze',
+      name: 'Mê cung Đô thị',
       obstacles: ['2,2', '2,3', '2,4', '4,2', '5,2', '6,2', '8,8', '8,9', '8,10', '10,8', '11,8'],
       waypoints: [{ x: 12, y: 12 }]
     }
@@ -32,6 +32,7 @@ class Database {
     this.data = this._load();
   }
 
+  // Tải dữ liệu từ localStorage
   _load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
@@ -41,18 +42,21 @@ class Database {
     return JSON.parse(raw);
   }
 
+  // Lưu dữ liệu vào localStorage
   _save() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.data));
   }
 
+  // Ghi nhật ký sự kiện hệ thống
   logEvent(msg, type = 'INFO') {
     const entry = { id: Date.now(), msg, type, time: new Date().toISOString() };
     this.data.logs.unshift(entry);
-    this.data.logs = this.data.logs.slice(0, 100);
+    this.data.logs = this.data.logs.slice(0, 100); // Giới hạn 100 dòng log gần nhất
     this._save();
     return entry;
   }
 
+  // Ghi nhận sự cố trong hành trình
   logIncident(tripId, type, msg) {
     const entry = { id: Date.now(), tripId: tripId || 'N/A', type, msg, time: new Date().toISOString() };
     this.data.incidents.unshift(entry);
@@ -60,6 +64,7 @@ class Database {
     return entry;
   }
 
+  // Bắt đầu một hành trình mới
   startTrip(missionInfo, scenarioName) {
     const trip = {
       id: Date.now(),
@@ -75,6 +80,7 @@ class Database {
     return trip;
   }
 
+  // Cập nhật quãng đường di chuyển của hành trình
   updateTripDistance(id, distance) {
     const trip = this.data.trips.find(t => t.id === id);
     if (trip) {
@@ -83,6 +89,7 @@ class Database {
     }
   }
 
+  // Kết thúc hành trình và lưu trạng thái cuối cùng
   endTrip(id, distance, status) {
     const trip = this.data.trips.find(t => t.id === id);
     if (trip) {
@@ -93,6 +100,7 @@ class Database {
     }
   }
 
+  // Lưu cấu hình bản đồ (kịch bản)
   saveScenario(name, obstacles, waypoints) {
     const idx = this.data.scenarios.findIndex(s => s.name === name);
     const scenario = { name, obstacles: Array.from(obstacles), waypoints };
@@ -101,6 +109,7 @@ class Database {
     this._save();
   }
 
+  // Xoá kịch bản bản đồ
   deleteScenario(name) {
     this.data.scenarios = this.data.scenarios.filter(s => s.name !== name);
     this._save();
@@ -110,6 +119,7 @@ class Database {
     return this.data.scenarios;
   }
 
+  // Lấy toàn bộ dữ liệu lịch sử
   getHistory() {
     return {
       trips: this.data.trips,
